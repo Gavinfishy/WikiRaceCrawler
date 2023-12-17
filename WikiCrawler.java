@@ -27,20 +27,16 @@ public class WikiCrawler {
         urlsWeveBeenOn.add(baseUrl+seedUrl);
         queue.add(baseUrl + seedUrl);
         int requestCount = 0;
-
         while (!queue.isEmpty() && visited.size() < max) {
             String url = queue.poll();
             URL tempURL = new URL(url);
             String urlPath = tempURL.getPath();
             requestCount++;
-
             if (isInRobots(url)) {
                 continue;
             }
-
             Document doc = Jsoup.connect(url).get();
             Elements links = doc.select("p a[href]");
-
             for (Element link : links) {
                 String absUrl = link.attr("abs:href");
                 URL tempAbsURL = new URL(absUrl);
@@ -57,7 +53,6 @@ public class WikiCrawler {
                     queue.add(absUrl);
                 }
             }
-
             if (requestCount % 10 == 0) {
                 try {
                     Thread.sleep(1000);
@@ -90,7 +85,6 @@ public class WikiCrawler {
         BufferedReader reader = new BufferedReader(new InputStreamReader(robotsUrl.openStream()));
         String line;
         String endpoint = new URL(url).getPath();
-
         while ((line = reader.readLine()) != null) {
             if (line.startsWith("Disallow:")) {
                 String disallowedPage = line.substring("Disallow:".length()).trim();
@@ -100,21 +94,18 @@ public class WikiCrawler {
                 }
             }
         }
-
         reader.close();
         return false;
     }
 
     public boolean isPageRelevant(String url){
         String pageTitle = url.split("/")[2].toLowerCase();
-
-        for (int i = 0; i < keywords.length; i ++){
-            String curr = keywords[i].toLowerCase();
-            if (pageTitle.contains(curr)){
+        for (String keyword : keywords) {
+            String curr = keyword.toLowerCase();
+            if (pageTitle.contains(curr)) {
                 return true;
             }
         }
-
         return false;
     }
 }
