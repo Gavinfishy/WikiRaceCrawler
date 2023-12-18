@@ -13,7 +13,7 @@ public class WikiCrawler {
     String baseUrl;
     String destUrl;
     RelevanceScore relevanceScore;
-    List<String> topWords;
+    Set<PageNode> pathVisited = new HashSet<PageNode>();
 
 //    public WikiCrawler(String seedUrl, String destUrl, String[] keywords, int max, String fileName) throws IOException {
 //        this.seedUrl = seedUrl;
@@ -107,70 +107,120 @@ public class WikiCrawler {
         this.baseUrl = baseUrl;
     }
 
-    public ArrayList<PageNode> find(String startUrl, String endUrl) throws IOException {
-        endUrl = baseUrl + '/' + endUrl;
-        relevanceScore = new RelevanceScore();
-        Document endDoc = Jsoup.connect(endUrl).get();
-        relevanceScore.calculateRelevance(endDoc.text());
-        topWords = relevanceScore.getTopRelevantWords(10);
-        int requestCount = 0;
-        LinkedList<PageNode> queue = new LinkedList<>();
-        Set<PageNode> visited = new LinkedHashSet<>();
-        queue.add(new PageNode(baseUrl + '/' + startUrl));
-        int currentDepth = 0;
-        System.out.println(topWords);
-        while (!queue.isEmpty()) {
-            PageNode page = queue.poll();
-            if (isInRobots(page.url)) {
-                continue;
-            }
-            requestCount++;
-            visited.add(page);
-            Document doc = null;
-            try {
-                doc = Jsoup.connect(page.url).get();
-            }
-            catch (HttpStatusException e) {
-                System.out.println("Error 404: " + page.url);
-                continue;
-            }
-            Elements links = doc.select("p a[href]");
-            for (Element link : links) {
-                String absUrl = link.attr("abs:href");
-                String redirectText = link.text();
-                if (absUrl.indexOf(":", 7) != -1 || absUrl.contains("#") || !absUrl.startsWith(baseUrl)) {
-                    continue;
-                }
-                PageNode absPage = new PageNode(absUrl, redirectText, page);
-                if (endUrl.equals(absPage.url)) {
-                    return createPath(absPage);
-                }
-
-                if (!visited.contains(absPage)) {
-                    if (containsTopWord(absPage.url)) {
-                        System.out.println(absPage);
-                        queue.addFirst(absPage);
-                    } else {
-                        System.out.println("last: " + absPage);
-                        queue.addLast(absPage);
-                    }
-                }
-            }
-            if (requestCount > 20) {
-                try {
-                    Thread.sleep(1000);
-                    requestCount = 0;
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (page.depth != currentDepth) {
-                currentDepth = page.depth;
-                System.out.println("Current depth: " + currentDepth);
-            }
-        }
-        return null;
-    }
+//    public ArrayList<PageNode> find(String startUrl, String endUrl) throws IOException {
+//        endUrl = baseUrl + '/' + endUrl;
+//        relevanceScore = new RelevanceScore();
+//        Document startDoc = Jsoup.connect(baseUrl + '/' + startUrl).get();
+//        relevanceScore.calculateRelevance(startDoc.text());
+//        List<String> startTopWords = relevanceScore.getTopRelevantWords(10);
+//        relevanceScore = new RelevanceScore();
+//        Document endDoc = Jsoup.connect(endUrl).get();
+//        relevanceScore.calculateRelevance(endDoc.text());
+//        List<String> endTopWords = relevanceScore.getTopRelevantWords(10);
+//        int requestCount = 0;
+//        LinkedList<PageNode> forwardQueue = new LinkedList<>();
+//        LinkedList<PageNode> backwardQueue = new LinkedList<>();
+//        Set<PageNode> forwardVisited = new LinkedHashSet<>();
+//        Set<PageNode> backwardVisited = new LinkedHashSet<>();
+//        forwardQueue.add(new PageNode(baseUrl + '/' + startUrl));
+//        backwardQueue.add(new PageNode(endUrl));
+//        int currentDepth = 0;
+//        System.out.println(startTopWords + " " + endTopWords);
+//        while (!forwardQueue.isEmpty() && !backwardQueue.isEmpty()) {
+//            PageNode forwardPage = forwardQueue.poll();
+//            if (isInRobots(forwardPage.url)) {
+//                continue;
+//            }
+//            requestCount++;
+//            forwardVisited.add(forwardPage);
+//            Document forwardDoc = null;
+//            try {
+//                forwardDoc = Jsoup.connect(forwardPage.url).get();
+//            }
+//            catch (HttpStatusException e) {
+//                System.out.println("Error 404: " + forwardPage.url);
+//                continue;
+//            }
+//            Elements forwardLinks = forwardDoc.select("p a[href]");
+//            for (Element link : forwardLinks) {
+//                String absUrl = link.attr("abs:href");
+//                String redirectText = link.text();
+//                if (absUrl.indexOf(":", 7) != -1 || absUrl.contains("#") || !absUrl.startsWith(baseUrl)) {
+//                    continue;
+//                }
+//                PageNode absPage = new PageNode(absUrl, redirectText, forwardPage);
+//                if (endUrl.equals(absPage.url)) {
+//                    return createPath(absPage);
+//                }
+//
+//                if (!forwardVisited.contains(absPage) && !backwardVisited.contains(absPage)) {
+//                    if (containsTopWord(absPage.url, endTopWords)) {
+//                        forwardQueue.addFirst(absPage);
+//                    } else {
+//                        forwardQueue.addLast(absPage);
+//                    }
+//                }
+//            }
+//            PageNode backwardPage = backwardQueue.poll();
+//            if (isInRobots(backwardPage.url)) {
+//                continue;
+//            }
+//            requestCount ++;
+//            backwardVisited.add(backwardPage);
+//            Document backwardDoc = null;
+//            try {
+//                backwardDoc = Jsoup.connect(backwardPage.url).get();
+//            }
+//            catch (HttpStatusException e) {
+//                System.out.println("Error 404: " + backwardPage.url);
+//                continue;
+//            }
+//            Elements backwardLinks = backwardDoc.select("p a[href]");
+//            for (Element link : backwardLinks) {
+//                String absUrl = link.attr("abs:href");
+//                String redirectText = link.text();
+//                if (absUrl.indexOf(":", 7) != -1 || absUrl.contains("#") || !absUrl.startsWith(baseUrl)) {
+//                    continue;
+//                }
+//                PageNode absPage = new PageNode(absUrl, redirectText, backwardPage);
+//                if (!backwardVisited.contains(absPage) && !forwardVisited.contains(absPage)) {
+//                    if (containsTopWord(absPage.url, startTopWords)) {
+//                        backwardQueue.addFirst(absPage);
+//                    }
+//                    else {
+//                        backwardQueue.addLast(absPage);
+//                    }
+//                }
+//            }
+//
+//            for (PageNode fPage : forwardVisited) {
+//                for (PageNode bPage : backwardVisited) {
+//                    if (fPage.url.equals(bPage.url)) {
+//                        ArrayList<PageNode> forwardPath = createPath(fPage);
+//                        ArrayList<PageNode> backwardPath = createPath(bPage);
+//                        Collections.reverse(backwardPath);
+//                        forwardPath.addAll(backwardPath);
+//                        return forwardPath;
+//                    }
+//                }
+//            }
+//
+//
+//            if (requestCount > 20) {
+//                try {
+//                    Thread.sleep(1000);
+//                    requestCount = 0;
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//            if (forwardPage.depth != currentDepth || backwardPage.depth != currentDepth) {
+//                currentDepth = Math.max(forwardPage.depth, backwardPage.depth);
+//                System.out.println("Current depth: " + currentDepth);
+//            }
+//        }
+//        return null;
+//    }
 
     public boolean isInRobots(String url) throws IOException {
         URL robotsUrl = new URL("https://en.wikipedia.org/robots.txt");
@@ -192,8 +242,13 @@ public class WikiCrawler {
 
     public ArrayList<PageNode> createPath(PageNode page) {
         ArrayList<PageNode> path = new ArrayList<PageNode>();
+        pathVisited = new HashSet<PageNode>();
         while (page != null) {
-            path.add(page);
+            System.out.println(page);
+            if (!pathVisited.contains(page)) {
+                path.add(page);
+                pathVisited.add(page);
+            }
             page = page.parent;
         }
         Collections.reverse(path);
@@ -229,7 +284,7 @@ public class WikiCrawler {
 //        return relevanceScore.getTopRelevantWords(n);
 //    }
 
-    public boolean containsTopWord(String url) {
+    public boolean containsTopWord(String url, List<String> topWords) {
         String endpoint = url.substring(url.indexOf("/wiki/") + 6).toLowerCase();
         for (String word : topWords) {
             if (endpoint.contains(word.toLowerCase())) {
@@ -238,4 +293,135 @@ public class WikiCrawler {
         }
         return false;
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public ArrayList<PageNode> find(String startUrl, String endUrl) throws IOException {
+        endUrl = baseUrl + '/' + endUrl;
+//        relevanceScore = new RelevanceScore();
+        Document startDoc = Jsoup.connect(baseUrl + '/' + startUrl).get();
+//        relevanceScore.calculateRelevance(startDoc.text());
+//        List<String> startTopWords = relevanceScore.getTopRelevantWords(10);
+//        relevanceScore = new RelevanceScore();
+        Document endDoc = Jsoup.connect(endUrl).get();
+//        relevanceScore.calculateRelevance(endDoc.text());
+//        List<String> endTopWords = relevanceScore.getTopRelevantWords(10);
+        int requestCount = 0;
+        LinkedList<PageNode> forwardQueue = new LinkedList<>();
+        LinkedList<PageNode> backwardQueue = new LinkedList<>();
+        Set<PageNode> forwardVisited = new LinkedHashSet<>();
+        Set<PageNode> backwardVisited = new LinkedHashSet<>();
+        forwardQueue.add(new PageNode(baseUrl + '/' + startUrl));
+        backwardQueue.add(new PageNode(endUrl));
+        int currentDepth = 0;
+//        System.out.println(startTopWords + " " + endTopWords);
+        while (!forwardQueue.isEmpty() && !backwardQueue.isEmpty()) {
+            PageNode forwardPage = forwardQueue.poll();
+            if (isInRobots(forwardPage.url)) {
+                continue;
+            }
+            requestCount++;
+            forwardVisited.add(forwardPage);
+            Document forwardDoc = null;
+            try {
+                forwardDoc = Jsoup.connect(forwardPage.url).get();
+            }
+            catch (HttpStatusException e) {
+                System.out.println("Error 404: " + forwardPage.url);
+                continue;
+            }
+            Elements forwardLinks = forwardDoc.select("p a[href]");
+            for (Element link : forwardLinks) {
+                String absUrl = link.attr("abs:href");
+                String redirectText = link.text();
+                if (absUrl.indexOf(":", 7) != -1 || absUrl.contains("#") || !absUrl.startsWith(baseUrl)) {
+                    continue;
+                }
+                PageNode absPage = new PageNode(absUrl, redirectText, forwardPage);
+                if (endUrl.equals(absPage.url)) {
+                    return createPath(absPage);
+                }
+
+                if (!forwardVisited.contains(absPage) && !backwardVisited.contains(absPage)) {
+//                    if (containsTopWord(absPage.url, endTopWords)) {
+//                        forwardQueue.addFirst(absPage);
+//                    } else {
+//                        forwardQueue.addLast(absPage);
+//                    }
+                    forwardQueue.add(absPage);
+                }
+            }
+            PageNode backwardPage = backwardQueue.poll();
+            if (isInRobots(backwardPage.url)) {
+                continue;
+            }
+            requestCount ++;
+            backwardVisited.add(backwardPage);
+            Document backwardDoc = null;
+            try {
+                backwardDoc = Jsoup.connect(backwardPage.url).get();
+            }
+            catch (HttpStatusException e) {
+                System.out.println("Error 404: " + backwardPage.url);
+                continue;
+            }
+            Elements backwardLinks = backwardDoc.select("p a[href]");
+            for (Element link : backwardLinks) {
+                String absUrl = link.attr("abs:href");
+                String redirectText = link.text();
+                if (absUrl.indexOf(":", 7) != -1 || absUrl.contains("#") || !absUrl.startsWith(baseUrl)) {
+                    continue;
+                }
+                PageNode absPage = new PageNode(absUrl, redirectText, backwardPage);
+                if (!backwardVisited.contains(absPage) && !forwardVisited.contains(absPage)) {
+//                    if (containsTopWord(absPage.url, startTopWords)) {
+//                        backwardQueue.addFirst(absPage);
+//                    }
+//                    else {
+//                        backwardQueue.addLast(absPage);
+//                    }
+                    backwardQueue.add(absPage);
+                }
+            }
+
+            for (PageNode fPage : forwardVisited) {
+                for (PageNode bPage : backwardVisited) {
+                    if (fPage.url.equals(bPage.url)) {
+                        ArrayList<PageNode> forwardPath = createPath(fPage);
+                        ArrayList<PageNode> backwardPath = createPath(bPage);
+                        Collections.reverse(backwardPath);
+                        forwardPath.addAll(backwardPath);
+                        return forwardPath;
+                    }
+                }
+            }
+
+
+            if (requestCount > 20) {
+                try {
+                    Thread.sleep(1000);
+                    requestCount = 0;
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (forwardPage.depth != currentDepth || backwardPage.depth != currentDepth) {
+                currentDepth = Math.max(forwardPage.depth, backwardPage.depth);
+                System.out.println("Current depth: " + currentDepth);
+            }
+        }
+        return null;
+    }
+
+
 }
