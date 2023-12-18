@@ -5,7 +5,7 @@ public class RelevanceScore {
 
     public RelevanceScore() {
         wordCount = new HashMap<>();
-        stopWords = new HashSet<>(Arrays.asList("the","in","at","on","and","or","to","of","a","as","for","are","with","from"));
+        stopWords = new HashSet<>(Arrays.asList("the","in","at","on","and","or","to","of","a","as","for","are","with","from","by","an","that","all","wikipedia"));
     }
 
     public void calculateRelevance(String document) {

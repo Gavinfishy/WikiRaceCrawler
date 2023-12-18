@@ -12,6 +12,7 @@ public class WikiCrawler {
     String fileName;
     String baseUrl;
     String destUrl;
+    RelevanceScore relevanceScore;
     List<String> topWords;
 
     public WikiCrawler(String seedUrl, String destUrl, String[] keywords, int max, String fileName) throws IOException {
@@ -23,6 +24,14 @@ public class WikiCrawler {
         baseUrl = "https://en.wikipedia.org";
         String destinationUrl = baseUrl + destUrl;
         this.topWords = getTopWordsFromUrl(destinationUrl, 10);
+    }
+
+    public WikiCrawler() {
+        this("https://en.wikipedia.org");
+    }
+
+    public WikiCrawler(String baseUrl) {
+        this.baseUrl = baseUrl;
     }
 
     public void crawl() throws IOException {
@@ -85,6 +94,63 @@ public class WikiCrawler {
         writer.close();
     }
 
+
+    public ArrayList<PageNode> find(String startUrl, String endUrl) throws IOException {
+        endUrl = baseUrl + '/' + endUrl;
+        relevanceScore = new RelevanceScore();
+        Document endDoc = Jsoup.connect(endUrl).get();
+        relevanceScore.calculateRelevance(endDoc.text());
+        topWords = relevanceScore.getTopRelevantWords(10);
+        LinkedList<PageNode> queue = new LinkedList<>();
+        Set<PageNode> visited = new LinkedHashSet<>();
+        queue.add(new PageNode(baseUrl + '/' + startUrl));
+        int currentDepth = 0;
+        System.out.println(topWords);
+        while (!queue.isEmpty()) {
+            PageNode page = queue.poll();
+            if (isInRobots(page.url)) {
+                continue;
+            }
+            visited.add(page);
+            Document doc = null;
+            try {
+                doc = Jsoup.connect(page.url).get();
+            }
+            catch (HttpStatusException e) {
+                System.out.println("Error 404: " + page.url);
+                continue;
+            }
+            Elements links = doc.select("p a[href]");
+            for (Element link : links) {
+                String absUrl = link.attr("abs:href");
+                String redirectText = link.text();
+                if (absUrl.indexOf(":", 7) != -1 || absUrl.contains("#") || !absUrl.startsWith(baseUrl)) {
+                    continue;
+                }
+                PageNode absPage = new PageNode(absUrl, redirectText, page);
+                if (endUrl.equals(absPage.url)) {
+                    return createPath(absPage);
+                }
+
+                if (!visited.contains(absPage)) {
+                    if (containsTopWord(absPage.url)) {
+                        System.out.println(absPage);
+                        queue.addFirst(absPage);
+                    } else {
+                        System.out.println("last: " + absPage);
+                        queue.addLast(absPage);
+                    }
+                }
+            }
+            if (page.depth != currentDepth) {
+                currentDepth = page.depth;
+                System.out.println("Current depth: " + currentDepth);
+            }
+        }
+        return null;
+    }
+
+
     public boolean isInRobots(String url) throws IOException {
         URL robotsUrl = new URL("https://en.wikipedia.org/robots.txt");
         BufferedReader reader = new BufferedReader(new InputStreamReader(robotsUrl.openStream()));
@@ -114,11 +180,53 @@ public class WikiCrawler {
         return false;
     }
 
+    public ArrayList<PageNode> createPath(PageNode page) {
+        ArrayList<PageNode> path = new ArrayList<PageNode>();
+        while (page != null) {
+            path.add(page);
+            page = page.parent;
+        }
+        Collections.reverse(path);
+        return path;
+    }
+
+    public static String pathToString(ArrayList<PageNode> path) {
+        if (path == null) {
+            return "No path found.";
+        }
+
+        StringBuilder hyperlinkPath = new StringBuilder();
+        StringBuilder listPath = new StringBuilder();
+        for (int i = 0; i < path.size(); i++) {
+            listPath.append(path.get(i));
+            listPath.append('\n');
+
+            if (i != 0) {
+                hyperlinkPath.append(" -> ");
+            }
+            hyperlinkPath.append(path.get(i).redirectText);
+        }
+        return listPath.toString() + '\n' + hyperlinkPath.toString();
+    }
+
+
+
     public List<String> getTopWordsFromUrl(String url, int n) throws IOException {
         Document doc = Jsoup.connect(url).get();
         RelevanceScore relevanceScore = new RelevanceScore();
         relevanceScore.calculateRelevance(doc.text());
         System.out.println(relevanceScore.getTopRelevantWords(n));
         return relevanceScore.getTopRelevantWords(n);
+    }
+
+    public boolean containsTopWord(String url) {
+        String endpoint = url.substring(url.indexOf("/wiki/") + 6).toLowerCase();
+        System.out.println(endpoint);
+        for (String word : topWords) {
+            if (endpoint.contains(word.toLowerCase())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
