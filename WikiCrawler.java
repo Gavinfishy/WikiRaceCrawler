@@ -11,13 +11,18 @@ public class WikiCrawler {
     int max;
     String fileName;
     String baseUrl;
+    String destUrl;
+    List<String> topWords;
 
-    public WikiCrawler(String seedUrl, String[] keywords, int max, String fileName) {
+    public WikiCrawler(String seedUrl, String destUrl, String[] keywords, int max, String fileName) throws IOException {
         this.seedUrl = seedUrl;
+        this.destUrl = destUrl;
         this.keywords = keywords;
         this.max = max;
         this.fileName = fileName;
         baseUrl = "https://en.wikipedia.org";
+        String destinationUrl = baseUrl + destUrl;
+        this.topWords = getTopWordsFromUrl(destinationUrl, 10);
     }
 
     public void crawl() throws IOException {
@@ -107,5 +112,13 @@ public class WikiCrawler {
             }
         }
         return false;
+    }
+
+    public List<String> getTopWordsFromUrl(String url, int n) throws IOException {
+        Document doc = Jsoup.connect(url).get();
+        RelevanceScore relevanceScore = new RelevanceScore();
+        relevanceScore.calculateRelevance(doc.text());
+        System.out.println(relevanceScore.getTopRelevantWords(n));
+        return relevanceScore.getTopRelevantWords(n);
     }
 }

@@ -1,0 +1,32 @@
+import java.util.*;
+public class RelevanceScore {
+    private Map<String, Integer> wordCount;
+    private Set<String> stopWords;
+
+    public RelevanceScore() {
+        wordCount = new HashMap<>();
+        stopWords = new HashSet<>(Arrays.asList("the","in","at","on","and","or","to","of","a","as","for","are","with","from"));
+    }
+
+    public void calculateRelevance(String document) {
+        String[] words = document.toLowerCase().split("\\W+");
+        for (String word : words) {
+            if (!stopWords.contains(word)) {
+                wordCount.put(word, wordCount.getOrDefault(word, 0) + 1);
+            }
+        }
+    }
+
+    public List<String> getTopRelevantWords(int n) {
+        PriorityQueue<Map.Entry<String, Integer>> maxHeap = new PriorityQueue<>((a, b) -> b.getValue() - a.getValue());
+        maxHeap.addAll(wordCount.entrySet());
+
+        List<String> topWords = new ArrayList<>();
+        while (n-- > 0 && !maxHeap.isEmpty()) {
+            topWords.add(maxHeap.poll().getKey());
+        }
+
+        return topWords;
+    }
+
+}
