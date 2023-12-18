@@ -5,13 +5,13 @@ public class RelevanceScore {
 
     public RelevanceScore() {
         wordCount = new HashMap<>();
-        stopWords = new HashSet<>(Arrays.asList("the","in","at","on","and","or","to","of","a","as","for","are","with","from","by","an","that","all","wikipedia"));
+        stopWords = new HashSet<>(Arrays.asList("the","in","at","on","and","or","to","of","as","for","are","with","from","by","an","that","all","wikipedia"));
     }
 
     public void calculateRelevance(String document) {
         String[] words = document.toLowerCase().split("\\W+");
         for (String word : words) {
-            if (!stopWords.contains(word)) {
+            if (!stopWords.contains(word) && word.length() > 1) {
                 wordCount.put(word, wordCount.getOrDefault(word, 0) + 1);
             }
         }

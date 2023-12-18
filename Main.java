@@ -12,6 +12,6 @@ public class Main {
         WikiCrawler wc = new WikiCrawler();
 
 //        System.out.println(WikiCrawler.pathToString(wc.find("wiki/Tennis", "wiki/Fortnite")));
-        System.out.println(WikiCrawler.pathToString(wc.find("wiki/Chair", "wiki/Philippines")));
+        System.out.println(WikiCrawler.pathToString(wc.find("wiki/Chair", "wiki/Phillippines")));
     }
 }
