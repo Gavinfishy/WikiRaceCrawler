@@ -1,9 +1,13 @@
+package wikibot;
+
 import org.jsoup.*;
 import org.jsoup.nodes.*;
 import org.jsoup.select.*;
+
 import java.io.*;
 import java.net.URL;
 import java.util.*;
+
 
 public class WikiCrawler {
     String seedUrl;
@@ -14,6 +18,7 @@ public class WikiCrawler {
     String destUrl;
     RelevanceScore relevanceScore;
     List<String> topWords;
+    ArrayList<String> robotUrls;
 
 //    public WikiCrawler(String seedUrl, String destUrl, String[] keywords, int max, String fileName) throws IOException {
 //        this.seedUrl = seedUrl;
@@ -105,6 +110,12 @@ public class WikiCrawler {
 
     public WikiCrawler(String baseUrl) {
         this.baseUrl = baseUrl;
+        try {
+            robotUrls = generateRobots(baseUrl + "/robots.txt");
+        }
+        catch (IOException e) {
+            robotUrls = new ArrayList<String>();
+        }
     }
 
     public ArrayList<PageNode> find(String startUrl, String endUrl) throws IOException {
@@ -148,10 +159,10 @@ public class WikiCrawler {
 
                 if (!visited.contains(absPage)) {
                     if (containsTopWord(absPage.url)) {
-                        System.out.println(absPage);
+//                        System.out.println(absPage);
                         queue.addFirst(absPage);
                     } else {
-                        System.out.println("last: " + absPage);
+//                        System.out.println("last: " + absPage);
                         queue.addLast(absPage);
                     }
                 }
@@ -172,21 +183,28 @@ public class WikiCrawler {
         return null;
     }
 
-    public boolean isInRobots(String url) throws IOException {
-        URL robotsUrl = new URL("https://en.wikipedia.org/robots.txt");
+    public ArrayList<String> generateRobots(String robots) throws IOException {
+        ArrayList<String> disallowedUrls = new ArrayList<String>();
+        URL robotsUrl = new URL(robots);
         BufferedReader reader = new BufferedReader(new InputStreamReader(robotsUrl.openStream()));
         String line;
-        String endpoint = new URL(url).getPath();
         while ((line = reader.readLine()) != null) {
             if (line.startsWith("Disallow:")) {
                 String disallowedPage = line.substring("Disallow:".length()).trim();
-                if (endpoint.equals(disallowedPage)) {
-                    reader.close();
-                    return true;
-                }
+                disallowedUrls.add(disallowedPage);
             }
         }
         reader.close();
+        return disallowedUrls;
+    }
+
+    public boolean isInRobots(String url) throws IOException {
+        String endpoint = new URL(url).getPath();
+        for (String disallowedPage : robotUrls) {
+            if (endpoint.equals(disallowedPage)) {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -223,7 +241,7 @@ public class WikiCrawler {
 
 //    public List<String> getTopWordsFromUrl(String url, int n) throws IOException {
 //        Document doc = Jsoup.connect(url).get();
-//        RelevanceScore relevanceScore = new RelevanceScore();
+//        wikibot.RelevanceScore relevanceScore = new wikibot.RelevanceScore();
 //        relevanceScore.calculateRelevance(doc.text());
 //        System.out.println(relevanceScore.getTopRelevantWords(n));
 //        return relevanceScore.getTopRelevantWords(n);

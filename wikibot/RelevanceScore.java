@@ -1,11 +1,13 @@
+package wikibot;
+
 import java.util.*;
 public class RelevanceScore {
     private Map<String, Integer> wordCount;
-    private Set<String> stopWords;
+    private final Set<String> stopWords;
 
     public RelevanceScore() {
         wordCount = new HashMap<>();
-        stopWords = new HashSet<>(Arrays.asList("the","in","at","on","and","or","to","of","as","for","are","with","from","by","an","that","all","wikipedia"));
+        stopWords = new HashSet<>(Arrays.asList("the","in","at","on","and","or","to","of","as","for","are","with","from","by","an","that","all","wikipedia","archived","original"));
     }
 
     public void calculateRelevance(String document) {

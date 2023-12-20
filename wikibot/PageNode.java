@@ -1,3 +1,5 @@
+package wikibot;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -10,7 +12,6 @@ public class PageNode implements Comparable<PageNode> {
     PageNode parent;
     int depth;
 
-
     public PageNode(String url) {
         this(url, getTitle(url), null);
     }
@@ -19,9 +20,8 @@ public class PageNode implements Comparable<PageNode> {
         try {
             Document doc = Jsoup.connect(url).get();
             Element heading = doc.getElementById("firstHeading");
-            String title = heading.text();
-            if (title != null) {
-                return title;
+            if (heading != null) {
+                return heading.text();
             }
         }
         catch (IOException e) {
