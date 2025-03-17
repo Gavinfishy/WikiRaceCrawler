@@ -50,7 +50,3 @@ This means the program found a path from the **Tennis** Wikipedia page to **Fort
 
 ## Contributing
 Feel free to fork this repo and submit pull requests!
-
-## License
-MIT License
-
