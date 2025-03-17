@@ -48,5 +48,6 @@ This means the program found a path from the **Tennis** Wikipedia page to **Fort
 - Implement a **web UI** for visualization.
 - Add **heuristic-based search algorithms** for faster results.
 
-## Contributing
-Feel free to fork this repo and submit pull requests!
+## Contributors
+- [Connor Tynan](https://github.com/connortynan)
+- [Gavin Fisher](https://github.com/Gavinfishy)
