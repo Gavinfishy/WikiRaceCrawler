@@ -3,7 +3,7 @@
 ## Overview
 This project is a **WikiRace Path Finder** that finds the shortest path between two Wikipedia pages using a bidirectional search strategy. It leverages **JSoup** to crawl Wikipedia and traverse links starting from both the source and target pages until a connection is found.
 
-### 🕹️ Play the game online:
+### Play the game online:
 [WikiRace Game](https://wiki-race.com/)
 
 ## How It Works
@@ -27,16 +27,16 @@ This project is a **WikiRace Path Finder** that finds the shortest path between 
 ```
 
 ## Usage
-### 1️⃣ Setup
+### Setup
 Ensure you have **Java 8+** installed.
 
-### 2️⃣ Run the Program
+### Run the Program
 ```sh
 javac Main.java
 java Main
 ```
 
-### 3️⃣ Example Output
+### Example Output
 ```sh
 Tennis -> Sports -> Video game -> Fortnite
 ```
